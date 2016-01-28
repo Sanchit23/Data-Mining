@@ -13,7 +13,7 @@ documents = []
 # class for fetching the files and procesing them.
 class preProcessor:
 
-	# method to get documents with raw data from reuters files
+	# method to get documents from reuters files
 	def getDocuments(self):
 		
 		# variable for keeping track of the number of documents
@@ -40,7 +40,7 @@ class preProcessor:
 		
 		return
 
-	# method to process raw data. Removes punctuation and stop words. Also stems words and capitalizes all letters.
+	# method to process the raw data. Removes punctuation and stop words. Also stems words and capitalizes all letters.
 	def process(self,s):
 		return ' '.join([each.upper() for each in self.stemWords(self.strip_stopwords(self.strip_punctuation(s))).split()])
 
@@ -69,7 +69,7 @@ class preProcessor:
 	# method to extract information from <places> tag 
 	def extractPlaces(self,document,counter):
 
-		# check if <topic> tag exists	
+		# check if <places> tag exists	
 		if not document.find_all('places'):
 			documents[counter]["places"] = ""
 
@@ -93,7 +93,7 @@ class preProcessor:
 	# method to extract information from <title> tag 
 	def extractTitle(self,document,counter):
 
-		# check if <topic> tag exists
+		# check if <title> tag exists
 		if not document.find_all('title'):
 			documents[counter]["title"] = ""
 
