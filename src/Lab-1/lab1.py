@@ -16,7 +16,7 @@ class preProcessor:
 	# method to get documents with raw data from reuters files
 	def getDocuments(self):
 		
-		# class variable for keeping track of the number of documents
+		# variable for keeping track of the number of documents
 		counter = -1
 
 		# iterate over all files in the reuters dataset directory
