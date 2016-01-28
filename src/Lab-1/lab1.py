@@ -1,20 +1,27 @@
-from bs4 import BeautifulSoup
 from os import listdir
+from bs4 import BeautifulSoup
+from string import punctuation
+from nltk.stem import *
+from nltk.corpus import stopwords
 
+# path of the reuters data set
 dir_path = "/home/0/srini/WWW/674/public/reuters/"
+
+# variable to hold all the processed documents
 documents = []
 
-# class for file pre-procesing
+# class for fetching the files and procesing them.
 class preProcessor:
 
 	# method to get documents with raw data from reuters files
-	def getRawDocuments(self):
+	def getDocuments(self):
+		
 		# class variable for keeping track of the number of documents
 		counter = -1
 
 		# iterate over all files in the reuters dataset directory
 		for file in listdir(dir_path):
-			print "\n----------- "+ file +" -----------\n"
+			print "\n----- processing file: "+ file +" -----\n"
 
 			# open file with Beautiful Soup parser
 			xmlFiles = BeautifulSoup(open(dir_path+file),"html.parser")
@@ -28,7 +35,14 @@ class preProcessor:
 				self.extractPlaces(document,counter);
 				self.extractTitle(document,counter);
 				self.extractBody(document,counter);
+
+		print str(len(documents)) + " documents found and processed"
+		
 		return
+
+	# method to process raw data. Removes punctuation and stop words. Also stems words and capitalizes all letters.
+	def process(self,s):
+		return ' '.join([each.upper() for each in self.stemWords(self.strip_stopwords(self.strip_punctuation(s))).split()])
 
 	# method to extract information from <topics> tag 
 	def extractTopics(self,document,counter):
@@ -97,7 +111,7 @@ class preProcessor:
 							title = title + "," + text;
 
 				#append to the global documents list
-				documents[counter]["title"] = title
+				documents[counter]["title"] = self.process(title)
 		return
 
 	# method to extract information from <body> tag 
@@ -121,11 +135,20 @@ class preProcessor:
 							body = body + "," + text;
 
 				#append to the global documents list
-				documents[counter]["body"] = body
+				documents[counter]["body"] = self.process(body)
 		return
 
-	# method to process raw data
-	def process(self):
-		return
+	# method to remove punctuation
+	def strip_punctuation(self,s):
+		return ''.join(c for c in s if c not in punctuation)
 
-preProcessor().getRawDocuments()
+	# method to remove stop words
+	def strip_stopwords(self,s):
+		return ' '.join([word for word in s.split() if word not in stopwords.words('english')])
+
+	# method for stemming the words
+	def stemWords(self,s):
+		stemmer = PorterStemmer()		
+		return ' '.join([stemmer.stem(word) for word in s.split()])
+
+preProcessor().getDocuments()
