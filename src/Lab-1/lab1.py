@@ -10,7 +10,7 @@ dir_path = "/home/0/srini/WWW/674/public/reuters/"
 # variable to hold all the processed documents
 documents = []
 
-# class for fetching the files and procesing them.
+# class for fetching the files and procesing them
 class preProcessor:
 
 	# method to get documents from reuters files
