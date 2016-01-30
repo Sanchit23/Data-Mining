@@ -43,6 +43,7 @@ class preProcessor:
 	# method to extract information from <topics> tag 
 	def extract(self,document,counter):
 		topics = document.find('topics')
+		places = document.find('places')
 		title = document.find('title')
 		body = document.find('body')
 
@@ -55,6 +56,11 @@ class preProcessor:
 			documents[counter]["title"] = ""
 		else:
 			documents[counter]["title"] = ','.join([word for word in document.find('title').stripped_strings])
+
+		if not places:
+			documents[counter]["places"] = ""
+		else:
+			documents[counter]["places"] = ','.join([word for word in document.find('places').stripped_strings])
 
 		if not body:
 			documents[counter]["body"] = ""
