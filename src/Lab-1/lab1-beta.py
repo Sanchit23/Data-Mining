@@ -80,7 +80,7 @@ class preProcessor:
         if not body:
             documents[counter]["body"] = ""
         else:
-            documents[counter]["body"] = ':'.join([self.process(word) for word in document.find('body').stripped_strings])
+            documents[counter]["body"] = ':'.join([self.process(str(word.encode('utf-8'))) for word in document.find('body').stripped_strings])
 
         return
 
@@ -97,7 +97,7 @@ class preProcessor:
         stop_words = stopwords.words("english")
         additional_stop_words = ["reuter","said","&#3;"]
         stop_words = stop_words + additional_stop_words
-        return ' '.join([str(word.encode('utf-8')) for word in s.split() if word not in stop_words])
+        return ' '.join([word for word in s.split() if word not in stop_words])
 
     # method for stemming the words and converting to lower case
     def stemWords(self,s):
