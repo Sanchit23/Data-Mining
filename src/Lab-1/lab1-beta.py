@@ -3,6 +3,7 @@ import copy
 import operator
 import math
 import csv
+import numpy as np
 from os import listdir
 from bs4 import BeautifulSoup
 from string import punctuation
@@ -11,9 +12,10 @@ from nltk.corpus import stopwords
 
 # path of the reuters data set
 #dir_path = "/home/0/srini/WWW/674/public/reuters/"
-dir_path = "http://web.cse.ohio-state.edu/~srini/674/public/reuters/"
+dir_path = "H:\\Data Mining\\Dataset\\"
 
 documents = [] # variable to hold all the processed documents
+begin_time = None
 
 TF_Dict = []   # holds the frequency of a word in a document-body
 TF_Count = [] # holds the TF for each word document-body-wise
@@ -21,18 +23,15 @@ term_count = []  # holds the number of words per body of the document
 word_info = {}  # holds the information that in how many different documents(body) a perticular word appera (not document-body-wise)
 idf_info = {}  # holds the IDF for each distict word (not document-body-wise)
 TF_IDF=[]     #  holds the TF_IDF for each word document-body-wise
-MF_TFIDF=[]
-
+header_words=[]
+document_matrix_tfidf = []
+document_matrix_frequency = []
+        
 # class for fetching the files and procesing them.
 class preProcessor:
 
-    # constructor
-    def __init__(self): pass
-
     # method to get documents from reuters files and process them
     def getDocuments(self):
-
-        begin_time = time.time()
         
         # variable for keeping track of the number of documents
         counter = -1
@@ -52,7 +51,7 @@ class preProcessor:
                 self.extract(document,counter)
 
         print str(len(documents)) + " documents found and processed"
-        # print "time taken: " + str((time.time() - (begin_time)))
+        # print "time taken: " + str((time.time() - (self.begin_time)))
 
         return
 
@@ -66,22 +65,22 @@ class preProcessor:
         if not topics:
             documents.append({"topics":""})
         else:
-            documents.append({"topics":(','.join([word for word in document.find('topics').stripped_strings]))})
+            documents.append({"topics":(':'.join([word for word in document.find('topics').stripped_strings]))})
 
         if not title:
             documents[counter]["title"] = ""
         else:
-            documents[counter]["title"] = ','.join([word for word in document.find('title').stripped_strings])
+            documents[counter]["title"] = ':'.join([word for word in document.find('title').stripped_strings])
 
         if not places:
             documents[counter]["places"] = ""
         else:
-            documents[counter]["places"] = ','.join([word for word in document.find('places').stripped_strings])
+            documents[counter]["places"] = ':'.join([word for word in document.find('places').stripped_strings])
 
         if not body:
             documents[counter]["body"] = ""
         else:
-            documents[counter]["body"] = ','.join([self.process(word) for word in document.find('body').stripped_strings])
+            documents[counter]["body"] = ':'.join([self.process(word) for word in document.find('body').stripped_strings])
 
         return
 
@@ -96,7 +95,7 @@ class preProcessor:
     # method to remove stop words
     def strip_stopwords(self,s):
         stop_words = stopwords.words("english")
-        additional_stop_words = ["reuter","the","said"]
+        additional_stop_words = ["reuter","said","&#3;"]
         stop_words = stop_words + additional_stop_words
         return ' '.join([str(word.encode('utf-8')) for word in s.split() if word not in stop_words])
 
@@ -148,34 +147,78 @@ class preProcessor:
     def tf_idf(self):
         for ITEM in TF_IDF:
             for K in ITEM.keys():
-                ITEM[K] = round((ITEM[K] * idf_info[K]['idf']),3)
+                ITEM[K] = round((ITEM[K] * idf_info[K]['idf']),3)       
         return 
         
-#    def tfidf_process(self):   
-#        sorted_idf = sorted(idf_info.items(), key=operator.itemgetter(1))
-#        sorted_idf.reverse()
-#        tmp = sorted_idf[0:100]
-#        return tmp
-#        
-#    def write_to_file_dtm(document_term_matrix, term_lexicon, file_name):
-#        with open(file_name, 'wb') as csvfile:
-#            writer = csv.writer(csvfile, delimiter=',',
-#                                quotechar=',', quoting=csv.QUOTE_MINIMAL)
-#    
-#            headers = []
-#            headers.append('TOPICS')
-#            headers.append('PLACES')
-#            for term in term_lexicon:
-#                headers.append(term)
-#    
-#            writer.writerow([header for header in headers])
-#            for document_feature_vector in document_term_matrix:
-#                writer.writerow([weight for weight in document_feature_vector])
+    def idf_process(self):  
+        count = 0        
+        temp=[]
+#        pro_data=[]
+        for val in range(0,len(idf_info.values())):
+            temp.append(idf_info.values()[val]['idf'])
+        MEAN=np.mean(temp)
+        SD = np.std(temp)
+        Range = MEAN - 2*SD
+        sorted_idf = sorted(idf_info.items(), key=operator.itemgetter(1))
         
+        while(sorted_idf[count][1]['idf'] <= Range) :
+               header_words.append(sorted_idf[count][0])
+               count = count + 1
+               
+#        for item in range(0,len(pro_data)):
+#            if not pro_data[item][0].isdigit():
+#               header_words.append(pro_data[item][0])
+        return
+    
+    def write_to_file(self, file_name, matrix):
+        with open(file_name, 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',',
+                                quotechar=',', quoting=csv.QUOTE_MINIMAL)
+    
+            headers = []
+            headers.append('TOPICS')
+            headers.append('PLACES')
+            for term in header_words:
+                headers.append(term)
+    
+            writer.writerow([header for header in headers])
+            for document_feature_vector in matrix:
+                writer.writerow([weight for weight in document_feature_vector])
+
+                   
+    def create_doc_matrix_tfidf(self):
+        for idx in range(0,len(documents)): 
+            feature_vector = [0]*(len(header_words) + 2)
+            feature_vector[0] = documents[idx]['topics']
+            feature_vector[1] = documents[idx]['places']
+            for word in TF_IDF[idx].keys():
+                if word in header_words:
+                    feature_vector[header_words.index(word)+2] = TF_IDF[idx][word]       
+            document_matrix_tfidf.append(feature_vector) 
+        self.write_to_file('doc_tfidf.csv',document_matrix_tfidf)
+        return 
+        
+    def create_doc_matrix_frequency(self):
+        for idx in range(0,len(documents)): 
+            feature_vector = [0]*(len(header_words) + 2)
+            feature_vector[0] = documents[idx]['topics']
+            feature_vector[1] = documents[idx]['places']
+            for word in TF_Dict[idx].keys():
+                if word in header_words:
+                    feature_vector[header_words.index(word)+2] = TF_Dict[idx][word]       
+            document_matrix_frequency.append(feature_vector) 
+        self.write_to_file('doc_frequency.csv',document_matrix_frequency)
+        return 
+        
+begin_time = time.time()        
 preProcessor().getDocuments()
 preProcessor().initialize_dict(documents)
 TF_Count = copy.deepcopy(TF_Dict)
 preProcessor().tf(documents)   
 TF_IDF = copy.deepcopy(TF_Count)
 preProcessor().tf_idf() 
-MF_TFIDF=preProcessor().tfidf_process()
+preProcessor().idf_process()
+print "time taken: " + str((time.time() - (begin_time))) 
+preProcessor().create_doc_matrix_tfidf()
+preProcessor().create_doc_matrix_frequency()
+print "total time taken: " + str((time.time() - (begin_time))) 
