@@ -11,8 +11,8 @@ from nltk import PorterStemmer
 from nltk.corpus import stopwords
 
 # path of the reuters data set
-#dir_path = "/home/0/srini/WWW/674/public/reuters/"
-dir_path = "H:\\Data Mining\\Dataset\\"
+dir_path = "/home/0/srini/WWW/674/public/reuters/"
+#dir_path = "H:\\Data Mining\\Dataset\\"
 
 documents = [] # variable to hold all the processed documents
 begin_time = None
@@ -65,28 +65,28 @@ class preProcessor:
         if not topics:
             documents.append({"topics":""})
         else:
-            documents.append({"topics":(':'.join([word for word in document.find('topics').stripped_strings]))})
+            documents.append({"topics":(':'.join([word for word in topics.stripped_strings]))})
 
         if not title:
             documents[counter]["title"] = ""
         else:
-            documents[counter]["title"] = ':'.join([word for word in document.find('title').stripped_strings])
+            documents[counter]["title"] = ':'.join([word for word in title.stripped_strings])
 
         if not places:
             documents[counter]["places"] = ""
         else:
-            documents[counter]["places"] = ':'.join([word for word in document.find('places').stripped_strings])
+            documents[counter]["places"] = ':'.join([word for word in places.stripped_strings])
 
         if not body:
             documents[counter]["body"] = ""
         else:
-            documents[counter]["body"] = ':'.join([self.process(str(word.encode('utf-8'))) for word in document.find('body').stripped_strings])
+            documents[counter]["body"] = self.process(':'.join([word.lower() for word in body.stripped_strings]))
 
         return
 
     # method to process the raw data. Removes punctuation and stop words. Also stems words and capitalizes all letters.
     def process(self,s):
-        return self.stemWords(self.strip_punctuation(self.strip_stopwords(s)))
+        return str((self.stemWords(self.strip_punctuation(self.strip_stopwords(s)))).encode('utf-8'))
 
     # method to remove punctuation
     def strip_punctuation(self,s):
@@ -95,9 +95,9 @@ class preProcessor:
     # method to remove stop words
     def strip_stopwords(self,s):
         stop_words = stopwords.words("english")
-        additional_stop_words = ["reuter","said","&#3;"]
+        additional_stop_words = ["reuter","said","&#3","and"]
         stop_words = stop_words + additional_stop_words
-        return ' '.join([word.lower() for word in s.split() if word not in stop_words])
+        return ' '.join([word for word in s.split() if word not in stop_words])
 
     # method for stemming the words and converting to lower case
     def stemWords(self,s):
@@ -221,4 +221,5 @@ preProcessor().idf_process()
 print "time taken: " + str((time.time() - (begin_time))) 
 preProcessor().create_doc_matrix_tfidf()
 preProcessor().create_doc_matrix_frequency()
-print "total time taken: " + str((time.time() - (begin_time))) 
+print "total time taken: " + str((time.time() - (begin_time)))
+print TF_Dict[0]
