@@ -3,10 +3,10 @@ import copy
 import operator
 import math
 import csv
+import string
 import numpy as np
 from os import listdir
 from bs4 import BeautifulSoup
-from string import punctuation
 from nltk import PorterStemmer
 from nltk.corpus import stopwords
 
@@ -49,7 +49,7 @@ class preProcessor:
 
                 # call methods to extract information from <topics>, <places>, <title> and <body> tags.
                 self.extract(document,counter)
-
+            
         print str(len(documents)) + " documents found and processed"
         # print "time taken: " + str((time.time() - (self.begin_time)))
 
@@ -80,36 +80,37 @@ class preProcessor:
         if not body:
             documents[counter]["body"] = ""
         else:
-            documents[counter]["body"] = self.process(':'.join([word.lower() for word in body.stripped_strings]))
+            documents[counter]["body"] = self.process(body.string)
 
         return
 
     # method to process the raw data. Removes punctuation and stop words. Also stems words and capitalizes all letters.
     def process(self,s):
-        return str((self.stemWords(self.strip_punctuation(self.strip_stopwords(s)))).encode('utf-8'))
+        return self.stemWords(self.strip_stopwords(self.strip_punctuation(s)))
 
     # method to remove punctuation
     def strip_punctuation(self,s):
-        return ''.join(c for c in s if c not in punctuation)
+        return ''.join(word.lower() for word in s if word not in string.punctuation)
+        #return str(words.encode('utf-8'))
 
     # method to remove stop words
     def strip_stopwords(self,s):
         stop_words = stopwords.words("english")
-        additional_stop_words = ["reuter","said","&#3","and"]
+        additional_stop_words = ["reuter","said","&#3","and","the"]
         stop_words = stop_words + additional_stop_words
-        return ' '.join([word for word in s.split() if word not in stop_words])
+        stripped = ' '.join([word for word in s.split() if not word in stop_words])
+        return stripped
 
     # method for stemming the words and converting to lower case
     def stemWords(self,s):
         stemmer = PorterStemmer()       
-        return ' '.join([stemmer.stem(word) for word in s.split()])
+        return ' '.join([stemmer.stem(word) for word in s.split() if not word.isdigit()])
                 
     def initialize_dict(self, documents):
         for Doc in documents:
             for word in Doc['body'].split(): 
                  word_info[word] = {'doc_count': 0}
-                 idf_info[word] = {'idf': 0}
-                 
+                 idf_info[word] = {'idf': 0}                
         self.word_freq_per_doc(documents) 
         self.total_word_count()
         return    
@@ -222,4 +223,3 @@ print "time taken: " + str((time.time() - (begin_time)))
 preProcessor().create_doc_matrix_tfidf()
 preProcessor().create_doc_matrix_frequency()
 print "total time taken: " + str((time.time() - (begin_time)))
-print TF_Dict[0]
