@@ -96,11 +96,8 @@ class PreProcessor:
         stemmer = PorterStemmer()       
         return ' '.join([stemmer.stem(word.lower()) for word in s.split()])
                 
-    
-
 class FeatureVector:
-
-    
+	
     word_info = {}  # holds the information about how many different documents(body) a perticular word appears in (not document-body-wise)
     idf_info = {}  # holds the IDF for each distict word (not document-body-wise)
     TF_Dict = []   # holds the frequency of a word in a document-body
