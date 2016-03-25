@@ -1,12 +1,12 @@
-import csv
 import time
 import copy
 import math
+import csv
+import string
 import operator
 import numpy as np
 from os import listdir
 from bs4 import BeautifulSoup
-from string import punctuation
 from nltk import PorterStemmer
 from nltk.corpus import stopwords
 
@@ -26,7 +26,7 @@ class PreProcessor:
         counter = -1
 
         # iterate over all files in the reuters dataset directory
-        for file in listdir(dir_path):
+        for file in listdir(dir_path).sort():
             print "\n----- processing file: "+ file +" -----\n"
 
             # open file with Beautiful Soup parser
@@ -57,44 +57,46 @@ class PreProcessor:
         if not topics or not topics.string:
             return "false"
         else:
-            documents.append({"topics":(':'.join([word for word in document.find('topics').stripped_strings]))})
+            documents.append({"topics":(':'.join([word for word in topics.stripped_strings]))})
 
         if not title:
             documents[counter]["title"] = ""
         else:
-            documents[counter]["title"] = ':'.join([word for word in document.find('title').stripped_strings])
+            documents[counter]["title"] = ':'.join([word for word in title.stripped_strings])
 
         if not places:
             documents[counter]["places"] = ""
         else:
-            documents[counter]["places"] = ':'.join([word for word in document.find('places').stripped_strings])
+            documents[counter]["places"] = ':'.join([word for word in places.stripped_strings])
 
         if not body:
             documents[counter]["body"] = ""
         else:
-            documents[counter]["body"] = ':'.join([self.process(word) for word in document.find('body').stripped_strings])
+            documents[counter]["body"] = self.process(body.string)
 
         return
 
     # method to process the raw data. Removes punctuation and stop words. Also stems words and capitalizes all letters.
     def process(self,s):
-        return self.stem_words(self.strip_punctuation(self.strip_stopwords(s)))
+        return self.stemWords(self.strip_stopwords(self.strip_punctuation(s)))
 
     # method to remove punctuation
     def strip_punctuation(self,s):
-        return ''.join(c for c in s if c not in punctuation)
+        return ''.join(word.lower() for word in s if word not in string.punctuation)
+        #return str(words.encode('utf-8'))
 
     # method to remove stop words
     def strip_stopwords(self,s):
         stop_words = stopwords.words("english")
-        additional_stop_words = ["reuter","said","&#3;"]
+        additional_stop_words = ["reuter","said","\x03","and","the"]
         stop_words = stop_words + additional_stop_words
-        return ' '.join([word for word in s.split() if word not in stop_words])
+        stripped = ' '.join([word for word in s.split() if not word in stop_words])
+        return stripped
 
-    # method for stemming the words and converting to lower case
-    def stem_words(self,s):
+   # method for stemming the words and converting to lower case
+    def stemWords(self,s):
         stemmer = PorterStemmer()       
-        return ' '.join([stemmer.stem(word.lower()) for word in s.split()])
+        return ' '.join([stemmer.stem(word) for word in s.split() if not word.isdigit()])
                 
 class FeatureVector:
 	
@@ -112,8 +114,7 @@ class FeatureVector:
         for Doc in documents:
             for word in Doc['body'].split(): 
                  self.word_info[word] = {'doc_count': 0}
-                 self.idf_info[word] = {'idf': 0}
-                 
+                 self.idf_info[word] = {'idf': 0}      
         self.word_freq_per_doc(documents) 
         self.total_word_count()
         return    
